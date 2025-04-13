@@ -1,1 +1,2 @@
 driving_behavior_model.pkl filter=lfs diff=lfs merge=lfs -text
+driving_behavior_model_compressed.pkl.gz filter=lfs diff=lfs merge=lfs -text
