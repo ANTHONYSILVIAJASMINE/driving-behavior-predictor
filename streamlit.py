@@ -34,13 +34,40 @@ input_dict = {
     f'Traffic Density_{traffic}': 1
 }
 
-# Get all columns from model
-input_df = pd.DataFrame([input_dict])
-for col in model.feature_names_in_:
-    if col not in input_df.columns:
-        input_df[col] = 0
-input_df = input_df[model.feature_names_in_]
+# --- FIX: Explicit list of expected features (same as used in training)
+all_columns = [
+    'Speed',
+    'Acceleration',
+    'Lane Position_Left',
+    'Lane Position_Center',
+    'Lane Position_Right',
+    'Time of Day_Morning',
+    'Time of Day_Afternoon',
+    'Time of Day_Evening',
+    'Time of Day_Night',
+    'Road Type_Highway',
+    'Road Type_City',
+    'Road Type_Rural',
+    'Weather Conditions_Clear',
+    'Weather Conditions_Rainy',
+    'Weather Conditions_Foggy',
+    'Weather Conditions_Snowy',
+    'Traffic Density_Low',
+    'Traffic Density_Moderate',
+    'Traffic Density_High'
+]
 
+# Create DataFrame with correct format
+input_df = pd.DataFrame([input_dict])
+
+# Ensure all required columns are present
+for col in all_columns:
+    if col not in input_df.columns:
+        input_df[col] = 0  # Add missing columns with 0 (indicating no presence of the feature)
+
+input_df = input_df[all_columns]  # Reorder columns to match model's expected input order
+
+# Predict
 if st.button("Predict"):
     prediction = model.predict(input_df)[0]
     if prediction == 1:
