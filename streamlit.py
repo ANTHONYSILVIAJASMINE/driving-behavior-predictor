@@ -1,62 +1,49 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import joblib
 import gzip
-import numpy as np
-
-# Title
-st.title("🚗 Driving Behavior Predictor")
-
-# Description
-st.write("This app predicts if a driving event occurred based on various road and driver conditions.")
 
 # Load the compressed model
 @st.cache_resource
 def load_model():
-    with gzip.open('driving_behavior_model_compressed.pkl.gz', 'rb') as f:
-        model = joblib.load(f)
-    return model
+    with gzip.open('driving_behavior_model.pkl.gz', 'rb') as f:
+        return joblib.load(f)
 
 model = load_model()
 
-# User input fields
-st.header("Enter Driving Conditions")
+st.title("🚗 Driving Behavior Predictor")
 
+# Input fields
+speed = st.slider("Speed (km/h)", 0, 200, 60)
+acceleration = st.slider("Acceleration (m/s²)", -10, 10, 0)
 lane_position = st.selectbox("Lane Position", ['Left', 'Center', 'Right'])
 time_of_day = st.selectbox("Time of Day", ['Morning', 'Afternoon', 'Evening', 'Night'])
 road_type = st.selectbox("Road Type", ['Highway', 'City', 'Rural'])
 weather = st.selectbox("Weather Conditions", ['Clear', 'Rainy', 'Foggy', 'Snowy'])
-traffic_density = st.selectbox("Traffic Density", ['Low', 'Medium', 'High'])
+traffic = st.selectbox("Traffic Density", ['Low', 'Moderate', 'High'])
 
-# Dummy input for numerical fields — adjust based on your actual features
-speed = st.slider("Speed (km/h)", 0, 200, 60)
-acceleration = st.slider("Acceleration (m/s²)", -10, 10, 0)
+# Encode inputs as one-hot
+input_dict = {
+    'Speed': speed,
+    'Acceleration': acceleration,
+    f'Lane Position_{lane_position}': 1,
+    f'Time of Day_{time_of_day}': 1,
+    f'Road Type_{road_type}': 1,
+    f'Weather Conditions_{weather}': 1,
+    f'Traffic Density_{traffic}': 1
+}
 
-# Collect all inputs in a dataframe
-input_data = pd.DataFrame({
-    'Lane Position_' + lane_position: [1],
-    'Time of Day_' + time_of_day: [1],
-    'Road Type_' + road_type: [1],
-    'Weather Conditions_' + weather: [1],
-    'Traffic Density_' + traffic_density: [1],
-    'Speed': [speed],
-    'Acceleration': [acceleration]
-})
+# Get all columns from model
+input_df = pd.DataFrame([input_dict])
+for col in model.feature_names_in_:
+    if col not in input_df.columns:
+        input_df[col] = 0
+input_df = input_df[model.feature_names_in_]
 
-# Add zeroes for missing one-hot encoded columns
-all_columns = model.feature_names_in_
-for col in all_columns:
-    if col not in input_data.columns:
-        input_data[col] = 0
-
-# Reorder columns to match training data
-input_data = input_data[all_columns]
-
-# Predict button
 if st.button("Predict"):
-    prediction = model.predict(input_data)[0]
+    prediction = model.predict(input_df)[0]
     if prediction == 1:
         st.success("🚨 Event likely occurred!")
     else:
         st.info("✅ No event detected.")
-
