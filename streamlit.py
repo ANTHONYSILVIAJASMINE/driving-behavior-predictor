@@ -23,49 +23,41 @@ road_type = st.selectbox("Road Type", ['Highway', 'City', 'Rural'])
 weather = st.selectbox("Weather Conditions", ['Clear', 'Rainy', 'Foggy', 'Snowy'])
 traffic = st.selectbox("Traffic Density", ['Low', 'Moderate', 'High'])
 
-# Encode inputs as one-hot
+# Encode inputs as one-hot (ensure all features are included here)
 input_dict = {
     'Speed': speed,
     'Acceleration': acceleration,
-    f'Lane Position_{lane_position}': 1,
-    f'Time of Day_{time_of_day}': 1,
-    f'Road Type_{road_type}': 1,
-    f'Weather Conditions_{weather}': 1,
-    f'Traffic Density_{traffic}': 1
+    'Lane Position_Left': 1 if lane_position == 'Left' else 0,
+    'Lane Position_Center': 1 if lane_position == 'Center' else 0,
+    'Lane Position_Right': 1 if lane_position == 'Right' else 0,
+    'Time of Day_Morning': 1 if time_of_day == 'Morning' else 0,
+    'Time of Day_Afternoon': 1 if time_of_day == 'Afternoon' else 0,
+    'Time of Day_Evening': 1 if time_of_day == 'Evening' else 0,
+    'Time of Day_Night': 1 if time_of_day == 'Night' else 0,
+    'Road Type_Highway': 1 if road_type == 'Highway' else 0,
+    'Road Type_City': 1 if road_type == 'City' else 0,
+    'Road Type_Rural': 1 if road_type == 'Rural' else 0,
+    'Weather Conditions_Clear': 1 if weather == 'Clear' else 0,
+    'Weather Conditions_Rainy': 1 if weather == 'Rainy' else 0,
+    'Weather Conditions_Foggy': 1 if weather == 'Foggy' else 0,
+    'Weather Conditions_Snowy': 1 if weather == 'Snowy' else 0,
+    'Traffic Density_Low': 1 if traffic == 'Low' else 0,
+    'Traffic Density_Moderate': 1 if traffic == 'Moderate' else 0,
+    'Traffic Density_High': 1 if traffic == 'High' else 0
 }
-
-# --- FIX: Explicit list of expected features (same as used in training)
-all_columns = [
-    'Speed',
-    'Acceleration',
-    'Lane Position_Left',
-    'Lane Position_Center',
-    'Lane Position_Right',
-    'Time of Day_Morning',
-    'Time of Day_Afternoon',
-    'Time of Day_Evening',
-    'Time of Day_Night',
-    'Road Type_Highway',
-    'Road Type_City',
-    'Road Type_Rural',
-    'Weather Conditions_Clear',
-    'Weather Conditions_Rainy',
-    'Weather Conditions_Foggy',
-    'Weather Conditions_Snowy',
-    'Traffic Density_Low',
-    'Traffic Density_Moderate',
-    'Traffic Density_High'
-]
 
 # Create DataFrame with correct format
 input_df = pd.DataFrame([input_dict])
 
-# Ensure all required columns are present
-for col in all_columns:
-    if col not in input_df.columns:
-        input_df[col] = 0  # Add missing columns with 0 (indicating no presence of the feature)
+# Get the model's expected feature names
+expected_columns = model.feature_names_in_
 
-input_df = input_df[all_columns]  # Reorder columns to match model's expected input order
+# Ensure all expected features are included and missing features are set to 0
+for col in expected_columns:
+    if col not in input_df.columns:
+        input_df[col] = 0
+
+input_df = input_df[expected_columns]
 
 # Predict
 if st.button("Predict"):
